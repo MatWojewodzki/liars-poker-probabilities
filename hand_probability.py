@@ -35,8 +35,9 @@ class UniqueCardRequirement(CardCountRequirement):
 
 
 class HandProbability:
-    def __init__(self, deck_info: DeckInfo):
+    def __init__(self, deck_info: DeckInfo, digits_of_precision: int | None = None):
         self.deck_info = deck_info
+        self.digits_of_precision = digits_of_precision
 
     @staticmethod
     def k_from_n_combinations(n: int, k: int) -> int:
@@ -72,7 +73,7 @@ class HandProbability:
             if selected_cards_count > self.deck_info.deck_size:
                 raise ValueError("Selected cards count must be less than or equal to deck size")
 
-            return sum(
+            probability = sum(
                 prod(
                     (HandProbability.k_from_n_combinations(total_cards_of_a_type, i) for i in card_counts),
                     start=HandProbability.k_from_n_combinations(
@@ -80,6 +81,8 @@ class HandProbability:
                     )
                 ) for card_counts in product(*ranges)
             ) / HandProbability.k_from_n_combinations(self.deck_info.deck_size, selected_cards_count)
+
+            return probability if self.digits_of_precision is None else round(probability, self.digits_of_precision)
 
         return probability_func
 
