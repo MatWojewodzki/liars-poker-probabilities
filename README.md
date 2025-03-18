@@ -1,7 +1,8 @@
-# liar's poker probability
+# liars-poker-probabilities
 
 Python script for calculating the exact probabilities of having any poker
-hand (or it's part) in a liar's poker card game.
+hand (or it's subpart) on the table in a liar's poker card game. Remember these are the probabilities of specific
+hands like a "pair of jacks", a "full house of 3 kings and 2 queens" or a "flush of hearts".
 
 ## Installation
 
