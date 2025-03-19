@@ -1,6 +1,6 @@
 from math import comb, prod
 from collections.abc import Callable
-from itertools import product
+from itertools import product, repeat
 
 
 class DeckInfo:
@@ -24,30 +24,6 @@ class DeckInfo:
         self.cards_of_suit_count = cards_of_suit_count
 
 
-class CardCountRequirement:
-    def __init__(self, required_count: int, total_count: int):
-        self.required_count = required_count
-        self.total_count = total_count
-
-    def __repr__(self):
-        return f"{self.__class__.__name__}(required_count={self.required_count}, total_count={self.total_count})"
-
-
-class CardRankRequirement(CardCountRequirement):
-    def __init__(self, required_count: int, deck_info: DeckInfo):
-        super().__init__(required_count, deck_info.cards_of_rank_count)
-
-
-class CardSuitRequirement(CardCountRequirement):
-    def __init__(self, required_count: int, deck_info: DeckInfo):
-        super().__init__(required_count, deck_info.cards_of_suit_count)
-
-
-class UniqueCardRequirement(CardCountRequirement):
-    def __init__(self):
-        super().__init__(1, 1)
-
-
 class HandProbability:
     """
     Provides methods for calculating the probability of a given hand in the deck.
@@ -68,27 +44,13 @@ class HandProbability:
             return 0
         return comb(n, k)
 
-    @staticmethod
-    def _check_requirement_integrity(*requirements: CardCountRequirement) -> None:
-        if all(isinstance(requirement, CardRankRequirement) for requirement in requirements):
-            return
-        if all(isinstance(requirement, CardSuitRequirement) for requirement in requirements):
-            return
-        if all(isinstance(requirement, UniqueCardRequirement) for requirement in requirements):
-            return
+    def _create_probability_func(self, total_cards_of_a_type: int, *min_cards_of_type: int) -> Callable[[int], float]:
 
-        raise TypeError("All requirements must be either of type CardRankRequirement, CardSuitRequirement or UniqueCardRequirement")
-
-    def _create_probability_func_with_requirements(self, *requirements: CardCountRequirement) -> Callable[[int], float]:
-        HandProbability._check_requirement_integrity(*requirements)
-
-        total_cards_of_a_type = requirements[0].total_count
+        total_cards_checked = total_cards_of_a_type * len(min_cards_of_type)
 
         ranges = []
-        total_cards_checked = 0
-        for requirement in requirements:
-            ranges.append(range(requirement.required_count, requirement.total_count + 1))
-            total_cards_checked += requirement.total_count
+        for min_card_count in min_cards_of_type:
+            ranges.append(range(min_card_count, total_cards_of_a_type + 1))
 
         def probability_func(selected_cards_count: int) -> float:
             if selected_cards_count < 0:
@@ -125,8 +87,10 @@ class HandProbability:
 
             func(12) returns the probability of the hand when 12 random cards are selected from the deck
         """
-        return self._create_probability_func_with_requirements(
-            *(CardRankRequirement(count, self.deck_info) for count in at_least_of_ranks))
+        return self._create_probability_func(
+            self.deck_info.cards_of_rank_count,
+            *at_least_of_ranks
+        )
 
     def at_least_of_suits_probability_function(self, *at_least_of_suits: int) -> Callable[[int], float]:
         """
@@ -145,8 +109,10 @@ class HandProbability:
 
             func(12) returns the probability of the hand when 12 random cards are selected from the deck
         """
-        return self._create_probability_func_with_requirements(
-            *(CardSuitRequirement(count, self.deck_info) for count in at_least_of_suits))
+        return self._create_probability_func(
+            self.deck_info.cards_of_suit_count,
+            *at_least_of_suits
+        )
 
     def unique_cards_probability_function(self, unique_card_count: int) -> Callable[[int], float]:
         """
@@ -165,5 +131,7 @@ class HandProbability:
 
             func(12) returns the probability of the hand when 12 random cards are selected from the deck
         """
-        return self._create_probability_func_with_requirements(
-            *(UniqueCardRequirement() for _ in range(unique_card_count)))
+        return self._create_probability_func(
+            1,
+            *(repeat(1, unique_card_count))
+        )
