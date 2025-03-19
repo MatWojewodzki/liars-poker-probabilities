@@ -4,6 +4,20 @@ from itertools import product
 
 
 class DeckInfo:
+    """
+    Represents the information and properties of a playing card deck.
+
+    The DeckInfo class is used to encapsulate essential information about a
+    deck of cards, including its size, the count of cards sharing the same rank,
+    and the count of cards sharing the same suit.
+
+    :ivar deck_size: Total number of cards in the deck.
+    :type deck_size: int
+    :ivar cards_of_rank_count: Number of cards for each rank in the deck.
+    :type cards_of_rank_count: int
+    :ivar cards_of_suit_count: Number of cards for each suit in the deck.
+    :type cards_of_suit_count: int
+    """
     def __init__(self, deck_size: int, cards_of_rank_count: int, cards_of_suit_count: int):
         self.deck_size = deck_size
         self.cards_of_rank_count = cards_of_rank_count
@@ -35,12 +49,21 @@ class UniqueCardRequirement(CardCountRequirement):
 
 
 class HandProbability:
+    """
+    Provides methods for calculating the probability of a given hand in the deck.
+
+    :ivar deck_info: The information related to the deck being utilized.
+    :type deck_info: DeckInfo
+    :ivar digits_of_precision: The number of decimal places to which probabilities are rounded.
+        If None, probabilities are not rounded.
+    :type digits_of_precision: int | None
+    """
     def __init__(self, deck_info: DeckInfo, digits_of_precision: int | None = None):
         self.deck_info = deck_info
         self.digits_of_precision = digits_of_precision
 
     @staticmethod
-    def k_from_n_combinations(n: int, k: int) -> int:
+    def _k_from_n_combinations(n: int, k: int) -> int:
         if k < 0 or k > n:
             return 0
         return comb(n, k)
@@ -75,25 +98,72 @@ class HandProbability:
 
             probability = sum(
                 prod(
-                    (HandProbability.k_from_n_combinations(total_cards_of_a_type, i) for i in card_counts),
-                    start=HandProbability.k_from_n_combinations(
-                        self.deck_info.deck_size - total_cards_checked, selected_cards_count - sum(card_counts)
-                    )
+                    (HandProbability._k_from_n_combinations(total_cards_of_a_type, i) for i in card_counts),
+                    start=HandProbability._k_from_n_combinations(self.deck_info.deck_size - total_cards_checked,
+                                                                 selected_cards_count - sum(card_counts))
                 ) for card_counts in product(*ranges)
-            ) / HandProbability.k_from_n_combinations(self.deck_info.deck_size, selected_cards_count)
+            ) / HandProbability._k_from_n_combinations(self.deck_info.deck_size, selected_cards_count)
 
             return probability if self.digits_of_precision is None else round(probability, self.digits_of_precision)
 
         return probability_func
 
     def at_least_of_ranks_probability_function(self, *at_least_of_ranks: int) -> Callable[[int], float]:
+        """
+        Returns a function that calculates the probability of selecting at least the specified number of cards of
+        the specified ranks from the deck.
+
+        :param at_least_of_ranks: The number of cards of each rank to be selected.
+        :return: A function that calculates the probability of having the hand based on the number
+            of selected cards.
+
+        Example:
+            To calculate the probability of selecting at least 3 kings and at least 2 queens call this function
+            as follows:
+
+            func = HandProbability(deck_info).at_least_of_ranks_probability_function(3, 2)
+
+            func(12) returns the probability of the hand when 12 random cards are selected from the deck
+        """
         return self._create_probability_func_with_requirements(
             *(CardRankRequirement(count, self.deck_info) for count in at_least_of_ranks))
 
     def at_least_of_suits_probability_function(self, *at_least_of_suits: int) -> Callable[[int], float]:
+        """
+        Returns a function that calculates the probability of selecting at least the specified number
+        of cards of the specified suits from the deck.
+
+        :param at_least_of_suits: The number of cards of each suit to be selected.
+        :return: A function that calculates the probability of having the hand based on the number
+            of selected cards.
+
+        Example:
+            To calculate the probability of selecting at least 3 hearts and at least 2 diamonds call this function
+            as follows:
+
+            func = HandProbability(deck_info).at_least_of_suits_probability_function(3, 2)
+
+            func(12) returns the probability of the hand when 12 random cards are selected from the deck
+        """
         return self._create_probability_func_with_requirements(
             *(CardSuitRequirement(count, self.deck_info) for count in at_least_of_suits))
 
     def unique_cards_probability_function(self, unique_card_count: int) -> Callable[[int], float]:
+        """
+        Returns a function that calculates the probability of selecting the specified number
+        of defined unique cards from the deck.
+
+        :param unique_card_count: The number of unique cards to be selected.
+        :return: A function that calculates the probability of having the hand based on the number
+            of selected cards.
+
+        Example:
+            To calculate the probability of selecting ace of spades and king of hearts
+            (assuming both cards are unique across the deck) call this function as follows:
+
+            func = HandProbability(deck_info).unique_cards_probability_function(2)
+
+            func(12) returns the probability of the hand when 12 random cards are selected from the deck
+        """
         return self._create_probability_func_with_requirements(
             *(UniqueCardRequirement() for _ in range(unique_card_count)))
