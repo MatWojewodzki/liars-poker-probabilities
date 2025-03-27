@@ -6,6 +6,7 @@ import json
 
 OUTPUT_FILE_NAME: str = "probability_data.json"
 DIGITS_OF_PRECISION: int | None = 6
+PRETTIFY: bool = False
 
 
 def list_of_probabilities(selected_cards: np.ndarray, func: callable):
@@ -39,8 +40,9 @@ def main():
         }
     }
 
+    indent = 4 if PRETTIFY else None
     with open(OUTPUT_FILE_NAME, "w") as f:
-        json.dump(probability_data, f, indent=4)
+        json.dump(probability_data, f, indent=indent)
 
 
 if __name__ == '__main__':
