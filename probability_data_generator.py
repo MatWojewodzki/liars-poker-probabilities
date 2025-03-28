@@ -26,7 +26,7 @@ def main():
         } | {
             "4+0": list_of_probabilities(selected_cards, hand_probability.at_least_of_ranks_probability_function(4))
         },
-        "street": {
+        "straight": {
             str(i): list_of_probabilities(selected_cards, hand_probability.at_least_of_ranks_probability_function(*repeat(1, i)))
             for i in range(1, 6)
         },
