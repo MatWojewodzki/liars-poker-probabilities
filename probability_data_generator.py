@@ -19,9 +19,11 @@ def main():
     hand_probability = HandProbability(deck_info, digits_of_precision=DIGITS_OF_PRECISION)
 
     probability_data = {
-        "highCard": list_of_probabilities(
-            hand_probability.create_probability_func(CardRequirement(1, 4))
-        ),
+        "highCard": [
+            list_of_probabilities(
+                hand_probability.create_probability_func(CardRequirement(1, 4))
+            )
+        ],
         "pair": [
             list_of_probabilities(
                 hand_probability.create_probability_func(CardRequirement(2 - matched_cards, 4 - matched_cards))
