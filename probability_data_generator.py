@@ -57,7 +57,7 @@ def main():
         "fullHouse": [[
             list_of_probabilities(
                 hand_probability.create_probability_func(
-                    CardRequirement(2 - matched_first_cards, 4 - matched_first_cards),
+                    CardRequirement(3 - matched_first_cards, 4 - matched_first_cards),
                     CardRequirement(2 - matched_second_cards, 4 - matched_second_cards)
                 )
             )

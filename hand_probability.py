@@ -39,6 +39,10 @@ class CardRequirement:
         among randomly selected cards from the deck.
     """
     def __init__(self, at_least: int, out_of: int):
+        if at_least < 0 or out_of < 0:
+            raise ValueError("at_least and out_of must be positive")
+        if at_least > out_of:
+            raise ValueError("at_least must be less than or equal to out_of")
         self.at_least = at_least
         self.out_of = out_of
 
